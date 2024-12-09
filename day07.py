@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import product
-import numexpr
+from operator import add, mul
+import time
 
 
 def read_input():
@@ -21,13 +22,11 @@ def generate_options(operators, length):
 
 
 def calculate(res, options, numbers):
-    if not res % numbers[-1] == 0:
-        options = [i for i in options if i[-1] != "*"]
     for opts in options:
         nums = numbers[:]
         ans = nums.pop(0)
         for row, sign in zip(nums, opts):
-            ans = numexpr.evaluate(f"{ans} {sign} {row}").item()
+            ans = sign(ans, row)
             if ans > res:
                 break
         if ans == res:
@@ -47,7 +46,9 @@ def clean_numbers_and_calc(res, options, numbers):
 
         while len(opt2) > 0:
             if opt2[0] != "||":
-                ans = numexpr.evaluate(f"{ans} {opt2.pop(0)} {nums.pop(0)}").item()
+                ans = opt2[0](ans, nums[0])
+                opt2.pop(0)
+                nums.pop(0)
             else:
                 if ans is None:
                     nums[0] = int(str(nums[0]) + str(nums[1]))
@@ -75,7 +76,7 @@ def check_ending(res, options, numbers):
     return options
 
 
-def part1(data, operators=["*", "+"]):
+def part1(data, operators=[mul, add]):
     total = []
     for k, v in data.items():
         opts = generate_options(operators, len(v) - 1)
@@ -88,7 +89,7 @@ def part1(data, operators=["*", "+"]):
     return total
 
 
-def part2(data, correct, operators=["*", "+", "||"]):
+def part2(data, correct, operators=[mul, add, "||"]):
     total = correct
     for k, v in data.items():
         if k in total:
@@ -104,6 +105,8 @@ def part2(data, correct, operators=["*", "+", "||"]):
 
 
 if __name__ == "__main__":
+    start = time.time()
     data = read_input()
     correct = part1(data)
     part2(data, correct)
+    print(time.time() - start)
